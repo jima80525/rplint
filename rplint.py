@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import sys
 
 
@@ -6,11 +7,6 @@ class Tester:
     def __init__(self):
         self.errors = []
         self.warnings = []
-
-    def test_line(self, index, line):
-        """ A real developer would make this an abstract base class. """
-        print("Improperly formed Test class")
-        sys.exit(1)
 
     def __str__(self):
         str = ""
@@ -27,7 +23,56 @@ class Tester:
         return str
 
 
-class TestLineLen(Tester):
+class LineTester(Tester):
+    def __init__(self):
+        super().__init__()
+        self.title = "Base Class Only"
+
+    def test_lines(self, lines):
+        for index, line in enumerate(lines, start=1):
+            line = line.strip()
+            self.test_line(index, line)
+
+
+class WordTester(Tester):
+    def __init__(self):
+        super().__init__()
+        self.title = "Base Class Only"
+
+    def test_lines(self, lines):
+        for index, line in enumerate(lines, start=1):
+            line = line.strip()
+            for word in self.extract(line):
+                self.test_word(index, word, line)
+
+    def extract(self, text):
+        word_regex = re.compile(
+            u"([\\w\\-'’`]+)([.,?!-:;><@#$%^&*()_+=/\]\\[])?")  # noqa W605
+        previous = None
+        final_word = None
+        for match in word_regex.finditer(text):
+            try:
+                word = match.group(1)
+                if not word:
+                    raise Exception("No word matches found. Bad regex?")
+                if previous:
+                    yield previous
+                    yield previous + " " + word
+                if match.group(2):  # hit punctuation, yield word by itself
+                    yield word
+                    previous = None
+                else:
+                    previous = word
+                final_word = previous
+            except IndexError:
+                word = match.group(0)
+                yield word
+
+        if final_word:
+            yield final_word
+
+
+class TestLineLen(LineTester):
     def __init__(self):
         super().__init__()
         self.title = "Line Length"
@@ -42,7 +87,7 @@ class TestLineLen(Tester):
             self.warnings.append(f"{index:5}: Line length: {len(line)}")
 
 
-class TestBadWords(Tester):
+class TestBadWords(WordTester):
     def __init__(self):
         super().__init__()
         self.title = "Bad Word"
@@ -51,12 +96,9 @@ class TestBadWords(Tester):
             "etc",
             "JHA",
             "TODO",
+            "built in",
             "very",
             "actually",
-            "exact same",
-            "built in",
-            "those of you",
-            "some of you",
             "OK",
             "easy",
             "simple",
@@ -65,13 +107,13 @@ class TestBadWords(Tester):
             "complex",
             "difficult",
             "unsurprising",
-            "as you can imagine",
         ]
 
-    def test_line(self, index, line):
-        for word in self.bad_words:
-            if word in line:
-                self.errors.append(f"{index}: Found '{word}' in line: {line}")
+    def test_word(self, index, word, line):
+        if word in self.bad_words:
+            trail = "..." if len(line) > 40 else ""
+            self.errors.append(f"{index}: Found '{word}' in line: "
+                               f"{line[:40]}{trail}")
 
 
 class TestPhrases(Tester):
@@ -92,7 +134,7 @@ class TestPhrases(Tester):
                 self.errors.append(f"{index}: Found '{word}' in line: {line}")
 
 
-class TestCodeFormatter(Tester):
+class TestCodeFormatter(LineTester):
     def __init__(self):
         super().__init__()
         self.title = "Code Formatter"
@@ -120,15 +162,14 @@ class TestCodeFormatter(Tester):
 
 def main(filename):
     testers = [TestLineLen(), TestBadWords(), TestCodeFormatter(), ]
+    # testers = [TestLineLen(), TestCodeFormatter(), ]
+    # testers = [TestBadWords(), ]
     with open(filename) as infile:
-        for index, line in enumerate(infile, start=1):
-            line = line.strip()
-            for tester in testers:
-                tester.test_line(index, line)
-    for tester in testers:
-        print(tester)
+        lines = infile.readlines()
+        for tester in testers:
+            tester.test_lines(lines)
+            print(tester)
 
 
 if __name__ == "__main__":
-    # main("PracticeProblems.mdt")
     main(sys.argv[1])
