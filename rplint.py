@@ -22,15 +22,36 @@ class Tester:
 
         return str
 
+    def __bool__(self):
+        return bool(self.errors)
+
+    def truncate_line(self, line):
+        trail = "..." if len(line) > 40 else ""
+        self.trunc = f"{line[:40]}{trail}"
+
+    def add_error(self, index, msg, origLine=None):
+        line = ""
+        if origLine:
+            trail = "..." if len(origLine) > 40 else ""
+            line = f": {origLine[:40]}{trail}"
+
+        self.errors.append(f"{index:5}: {msg}{line}")
+
 
 class LineTester(Tester):
     def __init__(self):
         super().__init__()
         self.title = "Base Class Only"
+        self.in_code_block = False
 
     def test_lines(self, lines):
+        """ Keeps a state machine of whether or not we're in a code block as
+        some tests only want to look outside code blocks. """
+        self.lines = [line.strip() for line in lines]
         for index, line in enumerate(lines, start=1):
-            line = line.strip()
+            self.truncate_line(line)
+            if line.startswith("```"):
+                self.in_code_block = not self.in_code_block
             self.test_line(index, line)
 
 
@@ -41,6 +62,7 @@ class WordTester(Tester):
 
     def test_lines(self, lines):
         for index, line in enumerate(lines, start=1):
+            self.truncate_line(line)
             line = line.strip()
             for word in self.extract(line):
                 self.test_word(index, word, line)
@@ -82,8 +104,9 @@ class TestLineLen(LineTester):
 
     def test_line(self, index, line):
         if len(line) > self.error_len:
-            self.errors.append(f"{index:5}: Line length: {len(line)}")
+            self.add_error(index, f"Line length: {len(line)}")
         elif len(line) > self.warn_len:
+            # JHA TODO do we want this???
             self.warnings.append(f"{index:5}: Line length: {len(line)}")
 
 
@@ -111,15 +134,13 @@ class TestBadWords(WordTester):
 
     def test_word(self, index, word, line):
         if word in self.bad_words:
-            trail = "..." if len(line) > 40 else ""
-            self.errors.append(f"{index}: Found '{word}' in line: "
-                               f"{line[:40]}{trail}")
+            self.add_error(index, f"Found '{word}' in line:")
 
 
-class TestPhrases(Tester):
+class TestPhrases(LineTester):
     def __init__(self):
         super().__init__()
-        self.title = "Bad Word"
+        self.title = "Bad Phrase"
         self.bad_words = [
             "exact same",
             "built in",
@@ -131,44 +152,73 @@ class TestPhrases(Tester):
     def test_line(self, index, line):
         for word in self.bad_words:
             if word in line:
-                self.errors.append(f"{index}: Found '{word}' in line: {line}")
+                self.add_error(index, f"Found '{word}' in line:")
 
 
 class TestCodeFormatter(LineTester):
     def __init__(self):
         super().__init__()
         self.title = "Code Formatter"
-        self.in_code_block = False
 
     def test_line(self, index, line):
         """ Tracks that all code blocks have formatters. Keeps a state machine
         of whether or not we're in a code block as we only want to look for
         formatters on starting lines. """
         lline = line.lower()
-        if line.startswith("```"):
-            if self.in_code_block:
-                self.in_code_block = False  # end of block
-            else:
-                self.in_code_block = True  # start of block
-                if len(line) == 3:
-                    self.errors.append(f"{index}: Code block has no formatter")
-                if "c++" in line.lower():
-                    self.errors.append(f"{index}: Code block has bad formatter"
-                                       " (c++ instead of cpp)")
-                if 'linenums=' in lline and 'linenums="' not in lline:
-                    self.errors.append(f"{index}: Poorly formed linenums spec "
-                                       "on formatter")
+        if line.startswith("```") and self.in_code_block:
+            if len(line) == 3:
+                self.add_error(index, "Code block has no formatter")
+            if "c++" in line.lower():
+                self.add_error(index, "Code block has bad formatter (c++ "
+                               "instead of cpp)")
+            if 'linenums=' in lline and 'linenums="' not in lline:
+                self.add_error(index, "Poorly formed linenums spec")
+
+
+class TestLeadingColon(LineTester):
+    def __init__(self):
+        super().__init__()
+        self.title = "Colon"
+        self.in_code_block = False
+
+    def test_line(self, index, line):
+        """ ensures that line before a code block is blank and two lines before
+        ends with a colon."""
+        if line.startswith("```") and self.in_code_block:
+            """ Because we're using a 1-based index, the actual indices into
+            the self.lines array are offset by one."""
+            blank = self.lines[index-2]
+            text = self.lines[index-3]
+            # sanity check to avoid issues
+            if index < 3:
+                self.add_error(index, "code block starts before text!")
+            # previous line (n-2) must be blank
+            elif len(blank) > 0:
+                self.add_error(index, "line preceding code block must be "
+                               "blank")
+            # line before that (n-3) must have text ending in colon
+            elif len(text) == 0:
+                self.add_error(index, "two blank lines before code block")
+            elif text[-1] != ":":
+                self.add_error(index, "final text preceding code block must "
+                               "end in colon")
 
 
 def main(filename):
-    testers = [TestLineLen(), TestBadWords(), TestCodeFormatter(), ]
-    # testers = [TestLineLen(), TestCodeFormatter(), ]
-    # testers = [TestBadWords(), ]
+    testers = [
+        TestLineLen(),
+        TestBadWords(),
+        TestPhrases(),
+        TestCodeFormatter(),
+        TestLeadingColon(),
+    ]
+    # testers = [TestLeadingColon(), ]
     with open(filename) as infile:
         lines = infile.readlines()
         for tester in testers:
             tester.test_lines(lines)
-            print(tester)
+            if tester:
+                print(tester)
 
 
 if __name__ == "__main__":
