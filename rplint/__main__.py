@@ -45,8 +45,8 @@ class LineTester(Tester):
         self.in_code_block = False
 
     def test_lines(self, lines):
-        """ Keeps a state machine of whether or not we're in a code block as
-        some tests only want to look outside code blocks. """
+        """Keeps a state machine of whether or not we're in a code block as
+        some tests only want to look outside code blocks."""
         self.lines = [line.strip() for line in lines]
         for index, line in enumerate(lines, start=1):
             self.truncate_line(line)
@@ -69,7 +69,8 @@ class WordTester(Tester):
 
     def extract(self, text):
         word_regex = re.compile(
-            u"([\\w\\-'’`]+)([.,?!-:;><@#$%^&*()_+=/\]\\[])?")  # noqa W605
+            r"([\w\-'’`]+)([.,?!-:;><@#$%^&*()_+=/\]\[])?"
+        )  # noqa W605
         previous = None
         final_word = None
         for match in word_regex.finditer(text):
@@ -117,12 +118,11 @@ class TestBadWords(WordTester):
         self.bad_words = [
             "aka",
             "etc",
+            "OK",
             "JHA",
             "TODO",
-            "built in",
             "very",
             "actually",
-            "OK",
             "easy",
             "simple",
             "obvious",
@@ -161,17 +161,19 @@ class TestCodeFormatter(LineTester):
         self.title = "Code Formatter"
 
     def test_line(self, index, line):
-        """ Tracks that all code blocks have formatters. Keeps a state machine
+        """Tracks that all code blocks have formatters. Keeps a state machine
         of whether or not we're in a code block as we only want to look for
-        formatters on starting lines. """
+        formatters on starting lines."""
         lline = line.lower()
         if line.startswith("```") and self.in_code_block:
             if len(line) == 3:
                 self.add_error(index, "Code block has no formatter")
             if "c++" in line.lower():
-                self.add_error(index, "Code block has bad formatter (c++ "
-                               "instead of cpp)")
-            if 'linenums=' in lline and 'linenums="' not in lline:
+                self.add_error(
+                    index,
+                    "Code block has bad formatter (c++ " "instead of cpp)",
+                )
+            if "linenums=" in lline and 'linenums="' not in lline:
                 self.add_error(index, "Poorly formed linenums spec")
 
 
@@ -182,28 +184,32 @@ class TestLeadingColon(LineTester):
         self.in_code_block = False
 
     def test_line(self, index, line):
-        """ ensures that line before a code block is blank and two lines before
+        """ensures that line before a code block is blank and two lines before
         ends with a colon."""
         if line.startswith("```") and self.in_code_block:
-            """ Because we're using a 1-based index, the actual indices into
+            """Because we're using a 1-based index, the actual indices into
             the self.lines array are offset by one."""
-            blank = self.lines[index-2]
-            text = self.lines[index-3]
+            blank = self.lines[index - 2]
+            text = self.lines[index - 3]
             # sanity check to avoid issues
             if index < 3:
                 self.add_error(index, "code block starts before text!")
             # previous line (n-2) must be blank
             elif len(blank) > 0:
-                self.add_error(index, "line preceding code block must be "
-                               "blank")
+                self.add_error(index, "line preceding code block must be blank")
             # line before that (n-3) must have text ending in colon
             elif len(text) == 0:
                 self.add_error(index, "two blank lines before code block")
             elif text[-1] != ":":
-                self.add_error(index, "final text preceding code block must "
-                               "end in colon")
+                self.add_error(
+                    index,
+                    "final text preceding code block must end in colon",
+                )
 
 
+# @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+# @click.option("-v", "--verbose", is_flag=True, help="Verbose debugging info")
+# @click.argument("doc", type=str, help="Markdown document to process")
 def main(filename):
     testers = [
         TestLineLen(),
