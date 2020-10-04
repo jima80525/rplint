@@ -104,6 +104,16 @@ class TestLineLen(LineTester):
         self.warn_len = 400
 
     def test_line(self, index, line):
+        url_pat = r"""
+                      \[        # literal opening square bracket
+                      ([\w\s]*) # the shown text from the line
+                      \]        # literal closing square bracket
+                       \s*      # optional whitespace (is this needed?)
+                       \(       # literal opening paren
+                       ([^\)]*) # group the url
+                       \)       # literal closing paren
+                   """
+        line = re.sub(url_pat, r"\g<1>", line, flags=re.VERBOSE)
         if len(line) > self.error_len:
             self.add_error(index, f"Line length: {len(line)}")
         elif len(line) > self.warn_len:
