@@ -4,4 +4,4 @@ from .__main__ import TestPhrases
 from .__main__ import TestCodeFormatter
 from .__main__ import TestLeadingColon
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
