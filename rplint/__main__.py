@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import click
 import re
 import sys
 
@@ -6,18 +7,12 @@ import sys
 class Tester:
     def __init__(self):
         self.errors = []
-        self.warnings = []
 
     def __str__(self):
         str = ""
         if self.errors:
             str += f"{self.title} Errors\n"
             for item in self.errors:
-                str += f"\t{item}\n"
-        # JHA TODO add flag for showing/hiding warnings
-        if self.warnings:
-            str += f"{self.title} Warnings\n"
-            for item in self.warnings:
                 str += f"\t{item}\n"
 
         return str
@@ -96,12 +91,11 @@ class WordTester(Tester):
 
 
 class TestLineLen(LineTester):
-    def __init__(self):
+    def __init__(self, limit):
         super().__init__()
         self.title = "Line Length"
         # JHA TODO get these in command line args with defaults
-        self.error_len = 500
-        self.warn_len = 400
+        self.error_len = limit
 
     def test_line(self, index, line):
         url_pat = r"""
@@ -116,31 +110,33 @@ class TestLineLen(LineTester):
         line = re.sub(url_pat, r"\g<1>", line, flags=re.VERBOSE)
         if len(line) > self.error_len:
             self.add_error(index, f"Line length: {len(line)}")
-        elif len(line) > self.warn_len:
-            # JHA TODO do we want this???
-            self.warnings.append(f"{index:5}: Line length: {len(line)}")
 
 
 class TestBadWords(WordTester):
-    def __init__(self):
+    def __init__(self, use_extra_words):
         super().__init__()
         self.title = "Bad Word"
         self.bad_words = [
             "aka",
             "etc",
             "OK",
-            "JHA",
-            "TODO",
             "very",
             "actually",
-            "easy",
-            "simple",
-            "obvious",
-            "trivial",
-            "complex",
-            "difficult",
-            "unsurprising",
         ]
+        if use_extra_words:
+            self.bad_words.extend(
+                [
+                    "JHA",
+                    "TODO",
+                    "easy",
+                    "simple",
+                    "obvious",
+                    "trivial",
+                    "complex",
+                    "difficult",
+                    "unsurprising",
+                ]
+            )
 
     def test_word(self, index, word, line):
         if word in self.bad_words:
@@ -217,13 +213,14 @@ class TestLeadingColon(LineTester):
                 )
 
 
-# @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
-# @click.option("-v", "--verbose", is_flag=True, help="Verbose debugging info")
-# @click.argument("doc", type=str, help="Markdown document to process")
-def main(filename):
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.option("-l", "--line-length", default=500)
+@click.option("-j", "--jima", is_flag=True, help="use extra bad word list")
+@click.argument("filename", type=str)
+def rplint(line_length, jima, filename):
     testers = [
-        TestLineLen(),
-        TestBadWords(),
+        TestLineLen(line_length),
+        TestBadWords(jima),
         TestPhrases(),
         TestCodeFormatter(),
         TestLeadingColon(),
@@ -238,4 +235,4 @@ def main(filename):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    rplint(sys.argv[1])

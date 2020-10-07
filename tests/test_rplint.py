@@ -3,7 +3,7 @@ import rplint
 
 def test_line_length():
     """ Test producing errors on long lines. """
-    dut = rplint.TestLineLen()
+    dut = rplint.TestLineLen(500)
     dut.test_line(1, "short")
     dut.test_line(2, "")
     dut.test_line(3, " ")
@@ -14,7 +14,7 @@ def test_line_length():
 
 
 def test_bad_words():
-    dut = rplint.TestBadWords()
+    dut = rplint.TestBadWords(True)
     dut.test_lines(
         [
             "short",
@@ -43,27 +43,27 @@ def test_bad_words():
     assert not bool(dut)
 
     # first word is bad
-    dut = rplint.TestBadWords()
+    dut = rplint.TestBadWords(True)
     dut.test_lines(["OK this is short", "that is not"])
     assert bool(dut)
 
     # middle word is bad
-    dut = rplint.TestBadWords()
+    dut = rplint.TestBadWords(True)
     dut.test_lines(["this is OK short", "that is not"])
     assert bool(dut)
 
     # last word is bad
-    dut = rplint.TestBadWords()
+    dut = rplint.TestBadWords(True)
     dut.test_lines(["this is short OK", "that is not"])
     assert bool(dut)
 
     # middle sentence is bad
-    dut = rplint.TestBadWords()
+    dut = rplint.TestBadWords(True)
     dut.test_lines(["first sentence", "this is short OK", "that is not"])
     assert bool(dut)
 
     # last sentence is bad
-    dut = rplint.TestBadWords()
+    dut = rplint.TestBadWords(True)
     dut.test_lines(
         [
             "first sentence",
@@ -320,12 +320,12 @@ def test_url_line_length():
     too_long = just_right + "z"
 
     # too_short and just_right should not raise an error
-    dut = rplint.TestLineLen()
+    dut = rplint.TestLineLen(500)
     dut.test_lines([too_short])
     dut.test_lines([just_right])
     assert not bool(dut)
 
     # too_long should fail
-    dut = rplint.TestLineLen()
+    dut = rplint.TestLineLen(500)
     dut.test_lines([too_long])
     assert bool(dut)
