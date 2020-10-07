@@ -74,9 +74,8 @@ def patch(c):
 @task
 def version(c):
     """ Update version for minor release. """
-    # status(f"Updating version from {VERSION}…")
-    # run("bumpversion minor --tag --commit")
-    status("TBD")
+    status(f"Updating version from {VERSION}…")
+    run("bump2version minor --tag --commit")
 
 
 @task

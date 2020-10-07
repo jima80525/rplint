@@ -1,11 +1,12 @@
 [tool.poetry]
-name = "poetry-demo"
-version = "0.1.2"
+name = "rplint"
+version = "0.1.0"
 description = ""
 authors = ["Jim Anderson <jima.coding@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
+bump2version = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.2"
