@@ -122,6 +122,7 @@ class TestBadWords(WordTester):
             "OK",
             "very",
             "actually",
+            "article",
         ]
         if use_extra_words:
             self.bad_words.extend(
@@ -140,7 +141,7 @@ class TestBadWords(WordTester):
 
     def test_word(self, index, word, line):
         if word in self.bad_words:
-            self.add_error(index, f"Found '{word}' in line:")
+            self.add_error(index, f"Found '{word}' in line")
 
 
 class TestPhrases(LineTester):
@@ -153,12 +154,31 @@ class TestPhrases(LineTester):
             "those of you",
             "some of you",
             "as you can imagine",
+            "our tutorial",
         ]
+        self.error_format = "Found '%s' in line"
 
     def test_line(self, index, line):
         for word in self.bad_words:
             if word in line:
-                self.add_error(index, f"Found '{word}' in line:")
+                # self.add_error(index, f"Found '{word}' in line")
+                self.add_error(index, self.error_format % word)
+
+
+class TestContractions(TestPhrases):
+    def __init__(self):
+        super().__init__()
+        self.error_format = "Found '%s' (should be a contraction) in line"
+        self.title = "Contraction"
+        self.bad_words = [
+            "has not",
+            "it is",
+            "that is",
+            "they are",
+            "they will",
+            "you will",
+            "you are",
+        ]
 
 
 class TestCodeFormatter(LineTester):
@@ -222,6 +242,7 @@ def rplint(line_length, jima, filename):
         TestLineLen(line_length),
         TestBadWords(jima),
         TestPhrases(),
+        TestContractions(),
         TestCodeFormatter(),
         TestLeadingColon(),
     ]

@@ -23,14 +23,14 @@ Here are the tests it performs:
 * **Line Length**: Tests if any single line is longer than a limit (500 characters by default). Take links into account.
 * **Bad Words**: Tests for any of a list of words which shouldn't be used in a Real Python article. This includes words like "OK", "aka", and "very".
 * **Phrases**: Tests for a list of multi-word phrases which are errors.  This includes "built in", and "same exact", a personal favorite.
+* **Contractions**: Searches for two-word phrases which could be contractions
 * **Code Formatter**: Tests that each code block has a code formatter specified and, as a bonus, makes sure `cpp` is used instead of `c++`.
 * **Leading Colon**: Tests that the final sentence before each code block ends with a colon followed by a blank line.
 
 ## Future Tests
 
-There are several features that could be added, but the next two on my list are:
+There are several features that could be added, but the next on my list is probably:
 
-* **Contractions**: Flag two-word phrases that could be made into contractions
 * **URL Alive**: Attempt an HTTP GET from all links
 
 I welcome more ideas, either as a simple message, an issue, or a PR here.

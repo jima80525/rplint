@@ -15,31 +15,11 @@ def test_line_length():
 
 def test_bad_words():
     dut = rplint.TestBadWords(True)
-    dut.test_lines(
-        [
-            "short",
-        ]
-    )
-    dut.test_lines(
-        [
-            "",
-        ]
-    )
-    dut.test_lines(
-        [
-            " ",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here" * 501,
-        ]
-    )
+    dut.test_lines(["short"])
+    dut.test_lines([""])
+    dut.test_lines([" "])
+    dut.test_lines(["no bad words here"])
+    dut.test_lines(["no bad words here" * 501])
     assert not bool(dut)
 
     # first word is bad
@@ -68,7 +48,7 @@ def test_bad_words():
         [
             "first sentence",
             "that is not",
-            "this is short OK",
+            "this is short OK? or not Okay",
         ]
     )
     assert bool(dut)
@@ -76,31 +56,11 @@ def test_bad_words():
 
 def test_bad_phrases():
     dut = rplint.TestPhrases()
-    dut.test_lines(
-        [
-            "short",
-        ]
-    )
-    dut.test_lines(
-        [
-            "",
-        ]
-    )
-    dut.test_lines(
-        [
-            " ",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here" * 501,
-        ]
-    )
+    dut.test_lines(["short"])
+    dut.test_lines([""])
+    dut.test_lines([" "])
+    dut.test_lines(["no bad words here"])
+    dut.test_lines(["no bad words here" * 501])
     assert not bool(dut)
 
     # first word is bad
@@ -132,6 +92,49 @@ def test_bad_phrases():
             "first sentence",
             "that is not",
             "this is short exact same",
+        ]
+    )
+    assert bool(dut)
+
+
+def test_contractions():
+    dut = rplint.TestContractions()
+    dut.test_lines(["short"])
+    dut.test_lines([""])
+    dut.test_lines([" "])
+    dut.test_lines(["no bad words here"])
+    dut.test_lines(["no bad words here" * 501])
+    assert not bool(dut)
+
+    # first word is bad
+    dut = rplint.TestContractions()
+    dut.test_lines(["that is exact same this is short", "this is not"])
+    assert bool(dut)
+
+    # middle word is bad
+    dut = rplint.TestContractions()
+    dut.test_lines(["words here that is short", "this is not"])
+    assert bool(dut)
+
+    # last word is bad
+    dut = rplint.TestContractions()
+    dut.test_lines(["this is short that is", "this is not"])
+    assert bool(dut)
+
+    # middle sentence is bad
+    dut = rplint.TestContractions()
+    dut.test_lines(
+        ["first sentence", "that is short exact same", "this is not"]
+    )
+    assert bool(dut)
+
+    # last sentence is bad
+    dut = rplint.TestContractions()
+    dut.test_lines(
+        [
+            "first sentence",
+            "this is not",
+            "that is short exact same",
         ]
     )
     assert bool(dut)
@@ -171,111 +174,42 @@ def test_two_word_detect():
 
     # fail on same phrase without punctuation
     dut = rplint.TestPhrases()
-    dut.test_lines(
-        [
-            " not exact same be corrected!\n",
-        ]
-    )
+    dut.test_lines([" not exact same be corrected!\n"])
     assert bool(dut)
 
 
 def test_code_formatter():
     dut = rplint.TestCodeFormatter()
-    dut.test_lines(
-        [
-            "short",
-        ]
-    )
-    dut.test_lines(
-        [
-            "",
-        ]
-    )
-    dut.test_lines(
-        [
-            " ",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here" * 501,
-        ]
-    )
-    dut.test_lines(
-        [
-            "```python ",
-        ]
-    )
-    dut.test_lines(
-        [
-            "```cpp ",
-        ]
-    )
-    dut.test_lines(
-        [
-            '```cpp linenums="1"',
-        ]
-    )
+    dut.test_lines(["short"])
+    dut.test_lines([""])
+    dut.test_lines([" "])
+    dut.test_lines(["no bad words here"])
+    dut.test_lines(["no bad words here" * 501])
+    dut.test_lines(["```python "])
+    dut.test_lines(["```cpp "])
+    dut.test_lines(['```cpp linenums="1"'])
     assert not bool(dut)
 
     dut = rplint.TestCodeFormatter()
-    dut.test_lines(
-        [
-            "```",
-            "```python ",
-        ]
-    )
+    dut.test_lines(["```", "```python "])
     assert bool(dut)
 
     dut = rplint.TestCodeFormatter()
-    dut.test_lines(
-        [
-            "```c++ ",
-        ]
-    )
+    dut.test_lines(["```c++ "])
     assert bool(dut)
 
     dut = rplint.TestCodeFormatter()
-    dut.test_lines(
-        [
-            "```cpp linenums=1",
-        ]
-    )
+    dut.test_lines(["```cpp linenums=1"])
     assert bool(dut)
 
 
 def test_leading_colon():
     dut = rplint.TestLeadingColon()
-    dut.test_lines(
-        [
-            "short",
-        ]
-    )
-    dut.test_lines(
-        [
-            "",
-        ]
-    )
-    dut.test_lines(
-        [
-            " ",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here",
-        ]
-    )
-    dut.test_lines(
-        [
-            "no bad words here" * 501,
-        ]
-    )
+    dut.test_lines(["short"])
+    dut.test_lines([""])
+    dut.test_lines([" "])
+    dut.test_lines(["no bad words here"])
+    dut.test_lines(["no bad words here" * 501])
     dut.test_lines(
         [
             "One line",
