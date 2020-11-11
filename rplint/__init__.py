@@ -1,9 +1,9 @@
-from .__main__ import TestLineLen
-from .__main__ import TestBadWords
-from .__main__ import TestPhrases
-from .__main__ import TestContractions
-from .__main__ import TestCodeFormatter
-from .__main__ import TestLeadingColon
-from .__main__ import rplint
+from .main import TestLineLen
+from .main import TestBadWords
+from .main import TestPhrases
+from .main import TestContractions
+from .main import TestCodeFormatter
+from .main import TestLeadingColon
+from .main import rplint
 
 __version__ = "0.2.0"
