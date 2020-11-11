@@ -1,6 +1,7 @@
 from .__main__ import TestLineLen
 from .__main__ import TestBadWords
 from .__main__ import TestPhrases
+from .__main__ import TestCodeBlockOrAlertEndsSection
 from .__main__ import TestContractions
 from .__main__ import TestCodeFormatter
 from .__main__ import TestLeadingColon

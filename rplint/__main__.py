@@ -233,6 +233,36 @@ class TestLeadingColon(LineTester):
                 )
 
 
+class TestCodeBlockOrAlertEndsSection(LineTester):
+
+    ENDALERT = "endalert %}"
+    ENDCODE = "```"
+    end_block_re = re.compile(rf".*?({ENDALERT}|{ENDCODE})\s*")
+
+    def __init__(self):
+        super().__init__()
+        self.title = "Dangling Code Block or Alert"
+
+    def test_line(self, index, line):
+        match = self.end_block_re.match(line)
+        if match and not self.in_code_block:
+            # We found a closing marker for a template tag or code
+            # block. Now look to see if subsequent lines go straight to
+            # introducing a header.
+            for next_line in self.lines[index:]:
+                if not next_line or next_line.isspace():
+                    continue
+                if next_line.startswith("#"):
+                    g = match.group(1)
+                    if g == self.ENDALERT:
+                        msg = "a section should not end abruptly with an endalert"
+                    elif g == self.ENDCODE:
+                        msg = "a section should not end with a code block"
+                    self.add_error(index, msg)
+                else:
+                    break
+
+
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("-l", "--line-length", default=500)
 @click.option("-j", "--jima", is_flag=True, help="use extra bad word list")
@@ -242,6 +272,7 @@ def rplint(line_length, jima, filename):
         TestLineLen(line_length),
         TestBadWords(jima),
         TestPhrases(),
+        TestCodeBlockOrAlertEndsSection(),
         TestContractions(),
         TestCodeFormatter(),
         TestLeadingColon(),
