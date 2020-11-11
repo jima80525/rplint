@@ -1,3 +1,5 @@
+import pytest
+
 import rplint
 
 
@@ -10,6 +12,16 @@ def test_line_length():
     dut.test_line(4, "l" * 500)
     assert not bool(dut)
     dut.test_line(5, "l" * 501)
+    assert bool(dut)
+
+
+@pytest.mark.parametrize("line", [
+    "Just visit [this link](https://realpython.com/) and you'll get rich!",
+    "You can find more on that [here](https://github.com/jima80525/rplint)",
+])
+def test_here_links(line):
+    dut = rplint.TestHereLinks()
+    dut.test_line(-1, line)
     assert bool(dut)
 
 
