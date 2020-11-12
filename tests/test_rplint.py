@@ -1,3 +1,5 @@
+import pytest
+
 import rplint
 
 
@@ -241,6 +243,48 @@ def test_leading_colon():
             "```python ",
         ]
     )
+    print(dut)
+    assert bool(dut)
+
+
+@pytest.mark.parametrize("text", [
+    """\
+This is a sentence. Alright, I'm introducing a code block now:
+
+```python
+f = "do the foo"
+print(f)
+```
+
+## Next Section
+
+Gee, hope you caught that, cause we're moving right on without you.
+""",
+    """\
+This is a sentence. Alright, I'm introducing a code block now:
+
+```python
+f = "do the foo"
+print(f)
+```
+## Next Section, But No Whitespace
+
+Gee, hope you caught that, cause we're moving right on without you.""",
+    r"""\
+This is a sentence. Alright, I'm introducing a code block now:
+
+{% alert %}
+You've been alerted
+{% endalert %}
+
+## Next Section
+
+Gee, hope you caught that, cause we're moving right on without you.
+"""
+])
+def test_dangling_cb_alert(text):
+    dut = rplint.TestCodeBlockOrAlertEndsSection()
+    dut.test_lines(text.splitlines())
     print(dut)
     assert bool(dut)
 

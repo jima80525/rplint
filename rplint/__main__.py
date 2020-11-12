@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 from .main import rplint
 
 if __name__ == "__main__":
