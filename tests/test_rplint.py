@@ -15,6 +15,16 @@ def test_line_length():
     assert bool(dut)
 
 
+@pytest.mark.parametrize("line", [
+    "Just visit [this link](https://realpython.com/) and you'll get rich!",
+    "You can find more on that [here](https://github.com/jima80525/rplint)",
+])
+def test_here_links(line):
+    dut = rplint.TestHereLinks()
+    dut.test_line(-1, line)
+    assert bool(dut)
+
+
 def test_bad_words():
     dut = rplint.TestBadWords(True)
     dut.test_lines(["short"])

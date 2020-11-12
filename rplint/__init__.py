@@ -1,5 +1,6 @@
 from .main import TestLineLen
 from .main import TestBadWords
+from .main import TestHereLinks
 from .main import TestPhrases
 from .main import TestCodeBlockOrAlertEndsSection
 from .main import TestContractions

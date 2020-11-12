@@ -260,6 +260,30 @@ class TestCodeBlockOrAlertEndsSection(LineTester):
                     break
 
 
+class TestHereLinks(LineTester):
+    """Catches links where the link text is a generic term.
+
+    ... 'generic' such as 'here' or 'this link'.
+    """
+
+    shoddy_md_link_re = re.compile(
+        r"\[(?:here|this (?:article|tutorial|link))\]\([^)]+\)"
+    )
+
+    def __init__(self):
+        super().__init__()
+        self.title = "Bad Link Text"
+
+    def test_line(self, index, line):
+        if self.in_code_block:
+            return None
+        match = self.shoddy_md_link_re.search(line)
+        if match:
+            self.add_error(
+                index,
+                f"links should use descriptive text: {match.group(0)}"
+            )
+
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("-l", "--line-length", default=500)
@@ -269,6 +293,7 @@ def rplint(line_length, jima, filename):
     testers = [
         TestLineLen(line_length),
         TestBadWords(jima),
+        TestHereLinks(),
         TestPhrases(),
         TestContractions(),
         TestCodeFormatter(),
