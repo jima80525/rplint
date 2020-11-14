@@ -66,9 +66,8 @@ def clean(c, bytecode=False, test=False, extra=""):
 @task
 def patch(c):
     """ Update version for patch release. """
-    # status(f"Updating version from {VERSION}…")
-    # run("bumpversion patch --tag --commit")
-    status("TBD")
+    status(f"Updating version from {VERSION}…")
+    run("bumpversion patch --tag --commit")
 
 
 @task
@@ -81,17 +80,15 @@ def version(c):
 @task
 def distclean(c):
     """ Cleans up everything. """
-    # status("Cleaning project…")
-    # clean(c, True, True)
-    status("TBD")
+    status("Cleaning project…")
+    clean(c, True, True)
 
 
 @task
 def build(c):
     """ Builds source and wheel distributions """
-    # status("Building Source and Wheel (universal) distribution…")
-    # run("{0} setup.py sdist bdist_wheel --universal".format(sys.executable))
-    status("TBD")
+    status("Building Source and Wheel (universal) distribution…")
+    run("poetry build")
 
 
 @task
@@ -105,11 +102,10 @@ def check_dist(c):
 @task(distclean, build, check_dist)
 def release(c):
     """ Creates distribution and pushes to PyPi. """
-    # status("Uploading the package to PyPI via Twine…")
-    # run("twine upload dist/*")
-    # status("Pushing git tags…")
-    # run("git push --tags")
-    status("TBD")
+    status("Uploading the package to PyPI via Poetry…")
+    run("poetry publish --build")
+    status("Pushing git tags…")
+    run("git push --tags")
 
 
 @task(distclean, build, check_dist)

@@ -1,5 +1,13 @@
 # rplint
-rplint is a linter for Real Python article writers and editors.  It performs a number of checks on a markdown document reporting errors to standard out.
+rplint is a linter for Real Python article writers and editors.  It performs a number of checks on a markdown document reporting errors to standard out. 
+
+It can be install from PyPI:
+
+```bash
+$ python -m pip install rplint
+```
+
+It can then be run as `rplint filename`.
 
 ## Usage
 
@@ -22,7 +30,9 @@ Here are the tests it performs:
 
 * **Line Length**: Tests if any single line is longer than a limit (500 characters by default). Take links into account.
 * **Bad Words**: Tests for any of a list of words which shouldn't be used in a Real Python article. This includes words like "OK", "aka", and "very".
+* **Weak URLs:** Tests for poorly phrase URL text
 * **Phrases**: Tests for a list of multi-word phrases which are errors.  This includes "built in", and "same exact", a personal favorite.
+* **Section End:** Tests for sections ending in a code block or an alert block
 * **Contractions**: Searches for two-word phrases which could be contractions
 * **Code Formatter**: Tests that each code block has a code formatter specified and, as a bonus, makes sure `cpp` is used instead of `c++`.
 * **Leading Colon**: Tests that the final sentence before each code block ends with a colon followed by a blank line.
@@ -44,3 +54,6 @@ I'm not sure if this will be useful to others, so until I see signs of life, I'm
 
 This project is in very early stages and I'm not certain it will continue as a stand alone project. Watch this space!
 
+## Authors
+
+I'd like to thank Brad Solomon for offering some excellent PRs on this and really moving it forward!
