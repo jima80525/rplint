@@ -19,4 +19,4 @@ requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry.scripts]
-rplint = "rplint:rplint.main(prog_name=__package__)"
+rplint = "rplint:rplint.main"
