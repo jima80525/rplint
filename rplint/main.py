@@ -154,6 +154,8 @@ class TestPhrases(LineTester):
             "as you can imagine",
             "our tutorial",
         ]
+        # To also catch bad phrases at the beginning of a sentence
+        self.bad_words.extend([p.capitalize() for p in self.bad_words])
         self.error_format = "Found '%s' in line"
 
     def test_line(self, index, line):
@@ -177,6 +179,8 @@ class TestContractions(TestPhrases):
             "you will",
             "you are",
         ]
+        # To also catch potential contractions at the beginning of a sentence
+        self.bad_words.extend([c.capitalize() for c in self.bad_words])
 
 
 class TestCodeFormatter(LineTester):
