@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rplint"
-version = "0.5.0"
+version = "0.6.0"
 description = ""
 authors = ["Jim Anderson <jima.coding@gmail.com>", "Brad Solomon"]
 
