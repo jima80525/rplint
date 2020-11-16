@@ -106,6 +106,8 @@ def release(c):
     run("poetry publish --build")
     status("Pushing git tags…")
     run("git push --tags")
+    status("Pushing main…")
+    run("git push origin main")
 
 
 @task(distclean, build, check_dist)
