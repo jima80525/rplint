@@ -121,6 +121,16 @@ class TestBadWords(WordTester):
             "very",
             "actually",
             "article",
+            "utilize",
+            "utilise",
+            "regarding",
+            "thus",
+            "upon",
+            "caveat",
+            "ergo",
+            "incognito",
+            "quasi",
+            "via",
         ]
         if use_extra_words:
             self.bad_words.extend(
@@ -153,6 +163,7 @@ class TestPhrases(LineTester):
             "some of you",
             "as you can imagine",
             "our tutorial",
+            "de facto",
         ]
         # To also catch bad phrases at the beginning of a sentence
         self.bad_words.extend([p.capitalize() for p in self.bad_words])
