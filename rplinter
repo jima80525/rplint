@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+from rplint import rplint
+
+if __name__ == "__main__":
+    rplint(prog_name=__package__)
