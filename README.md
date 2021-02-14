@@ -57,3 +57,12 @@ This project is in very early stages and I'm not certain it will continue as a s
 ## Authors
 
 I'd like to thank Brad Solomon for offering some excellent PRs on this and really moving it forward!
+
+## Release Notes
+
+### 0.6.0 -> 0.7.0  - 14 Feb 2021
+
+* Fixed link-removal regex so it removes links with bolded and mono-spaced text
+* Added link-removal to all line and word tester tests.  This remove false positives on links from python.org among other things
+* Added many of the words from the RP spelling recommendation pages.
+* Fixed a couple of missing contractions, along with checks for "we" and "our"

@@ -10,15 +10,28 @@ def test_line_length():
     dut.test_line(2, "")
     dut.test_line(3, " ")
     dut.test_line(4, "l" * 500)
+    fred = "visit [`**this -link`](https://realpython.com/) and you'll get rich"
+    fred = fred + "l" * 460
+    dut.test_lines([fred])
     assert not bool(dut)
     dut.test_line(5, "l" * 501)
     assert bool(dut)
 
+    # repeat test with link but in failing case
+    dut = rplint.TestLineLen(500)
+    fred = "visit [`**this -link`](https://realpython.com/) and you'll get rich"
+    fred = fred + "l" * 461
+    dut.test_lines([fred])
+    assert bool(dut)
 
-@pytest.mark.parametrize("line", [
-    "Just visit [this link](https://realpython.com/) and you'll get rich!",
-    "You can find more on that [here](https://github.com/jima80525/rplint)",
-])
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Just visit [this link](https://realpython.com/) and you'll get rich!",
+        "You can find more on that [here](https://github.com/jima80525/rplint)",
+    ],
+)
 def test_here_links(line):
     dut = rplint.TestHereLinks()
     dut.test_line(-1, line)
@@ -257,8 +270,10 @@ def test_leading_colon():
     assert bool(dut)
 
 
-@pytest.mark.parametrize("text", [
-    """\
+@pytest.mark.parametrize(
+    "text",
+    [
+        """\
 This is a sentence. Alright, I'm introducing a code block now:
 
 ```python
@@ -270,7 +285,7 @@ print(f)
 
 Gee, hope you caught that, cause we're moving right on without you.
 """,
-    """\
+        """\
 This is a sentence. Alright, I'm introducing a code block now:
 
 ```python
@@ -280,7 +295,7 @@ print(f)
 ## Next Section, But No Whitespace
 
 Gee, hope you caught that, cause we're moving right on without you.""",
-    r"""\
+        r"""\
 This is a sentence. Alright, I'm introducing a code block now:
 
 {% alert %}
@@ -290,8 +305,9 @@ You've been alerted
 ## Next Section
 
 Gee, hope you caught that, cause we're moving right on without you.
-"""
-])
+""",
+    ],
+)
 def test_dangling_cb_alert(text):
     dut = rplint.TestCodeBlockOrAlertEndsSection()
     dut.test_lines(text.splitlines())

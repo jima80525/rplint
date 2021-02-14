@@ -22,6 +22,18 @@ class Tester:
         trail = "..." if len(line) > 40 else ""
         self.trunc = f"{line[:40]}{trail}"
 
+    def remove_links(self, line):
+        url_pat = """
+                      \[                 # literal opening square bracket
+                      ([\`\(\)\*\w\s-]*) # the shown text from the line
+                      \]                 # literal closing square bracket
+                       \s*               # optional whitespace (is this needed?)
+                       \(                # literal opening paren
+                       ([^\)]*)          # group the url
+                       \)                # literal closing paren
+                   """
+        return re.sub(url_pat, r"\g<1>", line, flags=re.VERBOSE)
+
     def add_error(self, index, msg, origLine=None):
         line = ""
         if origLine:
@@ -43,6 +55,7 @@ class LineTester(Tester):
         self.lines = [line.strip() for line in lines]
         for index, line in enumerate(lines, start=1):
             self.truncate_line(line)
+            line = self.remove_links(line)
             if line.startswith("```"):
                 self.in_code_block = not self.in_code_block
             self.test_line(index, line)
@@ -52,10 +65,14 @@ class WordTester(Tester):
     def __init__(self):
         super().__init__()
         self.title = "Base Class Only"
+        self.in_code_block = False
 
     def test_lines(self, lines):
         for index, line in enumerate(lines, start=1):
             self.truncate_line(line)
+            line = self.remove_links(line)
+            if line.startswith("```"):
+                self.in_code_block = not self.in_code_block
             line = line.strip()
             for word in self.extract(line):
                 self.test_word(index, word, line)
@@ -96,16 +113,6 @@ class TestLineLen(LineTester):
         self.error_len = limit
 
     def test_line(self, index, line):
-        url_pat = r"""
-                      \[        # literal opening square bracket
-                      ([\w\s]*) # the shown text from the line
-                      \]        # literal closing square bracket
-                       \s*      # optional whitespace (is this needed?)
-                       \(       # literal opening paren
-                       ([^\)]*) # group the url
-                       \)       # literal closing paren
-                   """
-        line = re.sub(url_pat, r"\g<1>", line, flags=re.VERBOSE)
         if len(line) > self.error_len:
             self.add_error(index, f"Line length: {len(line)}")
 
@@ -115,9 +122,12 @@ class TestBadWords(WordTester):
         super().__init__()
         self.title = "Bad Word"
         self.bad_words = [
+            "I",
+            "we",
+            "our",
             "aka",
             "etc",
-            "OK",
+            "ok",
             "very",
             "actually",
             "article",
@@ -131,12 +141,102 @@ class TestBadWords(WordTester):
             "incognito",
             "quasi",
             "via",
+            "3-d",  # 3D
+            "boolean",  # Boolean (always cap)
+            "celsius",  # Celsius (cap)
+            "32 bit",  # always hyphen
+            "64 bit",  # always hyphen
+            "comma separated",  # comma-separated list
+            "cross platform",  # cross-platform (always hyphenate)
+            "data set"  # dataset (NOT data set)
+            "double check",  # double-check (always hyphenate as a verb)
+            "double click",  # double-click (always hyphenate as a verb)
+            "double space",  # double-space (always hyphenate as a verb)
+            "double-spacing",  # double spacing (noun)
+            "e-mail",  # email (not e-mail)
+            "file name",
+            "file-name",  # filename
+            "file-path",  # file path
+            "filesystem",
+            "file-system",  # file system
+            "floating point",  # floating-point number (hyphenate)
+            '"for" loop',
+            "for-loop",  # for loop (not “for” loop not for-loop)
+            "for/else",
+            "for-else",  # for … else (not for/else or for-else)
+            "front end",  # front-end developer (hyphenate)
+            "hard and fast",  # hard-and-fast rule
+            "hard code",  # hard-code
+            "hard coded",  # hard-coded
+            "hard coding",  # # hard-coding
+            "head first",  # headfirst (one word)
+            "if/else",
+            "if-else",  # if … else (not if/else or if-else)
+            "indexes",  # indices (not indexes)
+            "in-line",  # inline comment (no hyphen)
+            "left most",  # leftmost
+            "left-most",  # leftmost
+            "light weight",  # lightweight
+            "light-weight",  # lightweight
+            "lower case",
+            "lower-case",  # lowercase
+            "meta-character",  # metacharacter
+            "multi-dimensional",  # multidimensional
+            "multi-line",  # multiline
+            "new-line",  # newline
+            "non empty",  # non-empty
+            "nonempty",  # non-empty
+            "non existent",  # nonexistent
+            "non-existent",  # nonexistent
+            "non indented",  # non-indented
+            "nonindented",  # non-indented
+            "noninteger",  # non-integer
+            "object oriented",  # object-oriented
+            "on ramp",  # on-ramp (hyphenate)
+            "open ended",  # open-ended (aways hyphen)
+            "open-source",  # open source (never hyphenate)
+            "place-holder",  # placeholder
+            "pre-existing",  # preexisting
+            "pre-installed",  # preinstalled
+            "re-assign",  # reassign
+            "recreate",  # re-create (to avoid confusion with recreate, meaning to relax)
+            "re-initialize",  # reinitialize
+            "re-open",  # reopen
+            "re-run",  # rerun
+            "right click",  # right-click (always hyphenate)
+            "right-most",  # rightmost
+            "run-time",  # runtime
+            "to-last",  # second to last (never hyphenate; “third to last” etc.)
+            "slice-notation",  # slice notation
+            "stand alone",  # stand-alone
+            "square-bracket",  # square bracket notation (no hyphen)
+            "super power",  # superpower (one word)
+            "time stamp",  # timestamp (not time stamp)
+            "time-stamp",  # timestamp (not time stamp)
+            "top-most",  # topmost
+            "upper case",  # uppercase
+            "upper-case",  # uppercase
+            "use-case",  # use case (not usecase not use-case)
+            "usecase",  # use case (not usecase not use-case)
+            "user friendly",  # user-friendly (always hyphenate)
+            "user name",  # username
+            "user-name",  # username
+            "walk-through",  # walkthrough (not walk-through)
+            "webpage",  # web page
+            "web site",  # website
+            "white space",  # whitespace
+            "x axis",  # x-axis
+            "x coordinate",  # x-coordinate (always hyphenate)
+            "x value",  # x-value
+            "y axis",  # y-axis
+            "y coordinate",  # y-coordinate (always hyphenate)
+            "y value",  # y-value
         ]
         if use_extra_words:
             self.bad_words.extend(
                 [
-                    "JHA",
-                    "TODO",
+                    "jha",
+                    "todo",
                     "easy",
                     "simple",
                     "obvious",
@@ -146,9 +246,61 @@ class TestBadWords(WordTester):
                     "unsurprising",
                 ]
             )
+        self.cap_words = [
+            "bokeh",  # Bokeh
+            "Numpy",  # NumPy
+            "numpy",  # NumPy
+            "Pygame",  # PyGame
+            "pygame",  # PyGame
+            "Pytorch",  # PyTorch
+            "pytorch",  # PyTorch
+            "Tensorflow",  # TensorFlow
+            "tensorflow",  # TensorFlow
+            "Conda",  # conda (lowercase, monospace)
+            "Computer Science",
+            "Computer science",  # computer science (no caps)
+            "fahrenheit",  # Fahrenheit (capitalize)
+            "f string",
+            "F string",
+            "F-string",  # f-string (hyphenate, do not capitalize)
+            "gherkin",  # Gherkin (uppercase)
+            "hello, world",
+            "hello world",
+            "Hello world",  # Hello, World (monospace, comma, caps)
+            "javascript",  # JavaScript
+            "Mac OS",  # macOS (not Mac OS or macos)
+            "macos",  # macOS (not Mac OS or macos)
+            "OSX",  # OS X (NOT OSX)
+            "Pandas",  # pandas (always lowercase)
+            "pep8",  # PEP 8 (not PEP8)
+            "Pep8",  # PEP 8 (not PEP8)
+            "PEP8",  # PEP 8 (not PEP8)
+            "pep-8",  # PEP 8 (not PEP8)
+            "Pep-8",  # PEP 8 (not PEP8)
+            "PEP-8",  # PEP 8 (not PEP8)
+            "pep 8",  # PEP 8 (not PEP8)
+            "Pep 8",  # PEP 8 (not PEP8)
+            "pygame",  # Pygame (always capitalize)
+            "pypi",  # PyPI
+            "Pypi",  # PyPI
+            "Pytest",  # pytest
+            "python",  # Python (not python)
+            "Scikit-Learn",  # scikit-learn
+            "Scikit-learn",  # scikit-learn
+            "scikit-Learn",  # scikit-learn
+            "start menu",  # Start menu (cap)
+            "System Python",  # system Python (lowercase)
+            "utf-8",  # UTF-8
+            "Wi Fi",  # Wi-Fi (not WIFI)
+            "WI-FI",  # Wi-Fi (not WIFI)
+            "WIFI",  # Wi-Fi (not WIFI)
+        ]
 
     def test_word(self, index, word, line):
-        if word in self.bad_words:
+        if word.lower() in self.bad_words:
+            self.add_error(index, f"Found '{word}' in line")
+        elif word in self.cap_words and not self.in_code_block:
+            # frequently code blocks must spell things with different case
             self.add_error(index, f"Found '{word}' in line")
 
 
@@ -184,6 +336,7 @@ class TestContractions(TestPhrases):
         self.bad_words = [
             "has not",
             "it is",
+            "it will",
             "that is",
             "they are",
             "they will",
@@ -267,7 +420,9 @@ class TestCodeBlockOrAlertEndsSection(LineTester):
                 if next_line.startswith("#"):
                     g = match.group(1)
                     if g == self.ENDALERT:
-                        msg = "a section should not end abruptly with an endalert"
+                        msg = (
+                            "a section should not end abruptly with an endalert"
+                        )
                     elif g == self.ENDCODE:
                         msg = "a section should not end with a code block"
                     self.add_error(index, msg)
@@ -295,8 +450,7 @@ class TestHereLinks(LineTester):
         match = self.shoddy_md_link_re.search(line)
         if match:
             self.add_error(
-                index,
-                f"links should use descriptive text: {match.group(0)}"
+                index, f"links should use descriptive text: {match.group(0)}"
             )
 
 
