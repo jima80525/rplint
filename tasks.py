@@ -6,7 +6,7 @@ import pytest
 import setuptools
 import sys
 
-VERSION = "0.7.0"
+VERSION = "0.7.1"
 
 
 def status(s):

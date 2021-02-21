@@ -8,4 +8,4 @@ from .main import TestCodeFormatter
 from .main import TestLeadingColon
 from .main import rplint
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"

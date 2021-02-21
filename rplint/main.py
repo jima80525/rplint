@@ -1,7 +1,7 @@
 import click
 import re
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 class Tester:
     def __init__(self):
