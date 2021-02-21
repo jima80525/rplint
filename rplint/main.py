@@ -1,6 +1,7 @@
 import click
 import re
 
+__version__ = "0.7.0"
 
 class Tester:
     def __init__(self):
@@ -335,6 +336,7 @@ class TestContractions(TestPhrases):
         self.title = "Contraction"
         self.bad_words = [
             "has not",
+            "do not",
             "it is",
             "it will",
             "that is",
@@ -457,6 +459,7 @@ class TestHereLinks(LineTester):
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("-l", "--line-length", default=500)
 @click.option("-j", "--jima", is_flag=True, help="use extra bad word list")
+@click.version_option(version=__version__)
 @click.argument("filename", type=str)
 def rplint(line_length, jima, filename):
     testers = [
