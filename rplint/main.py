@@ -63,6 +63,34 @@ class LineTester(Tester):
             self.test_line(index, line)
 
 
+def word_extractor(text):
+    word_regex = re.compile(
+        r"([\w\-'’`]+)([.,?!-:;><@#$%^&*()_+=/\]\[])?"
+    )  # noqa W605
+    previous = None
+    final_word = None
+    for match in word_regex.finditer(text):
+        try:
+            word = match.group(1)
+            if not word:
+                raise Exception("No word matches found. Bad regex?")
+            if previous:
+                yield previous
+                yield previous + " " + word
+            if match.group(2):  # hit punctuation, yield word by itself
+                yield word
+                previous = None
+            else:
+                previous = word
+            final_word = previous
+        except IndexError:
+            word = match.group(0)
+            yield word
+
+    if final_word:
+        yield final_word
+
+
 class WordTester(Tester):
     def __init__(self):
         super().__init__()
@@ -76,35 +104,8 @@ class WordTester(Tester):
             if line.startswith("```"):
                 self.in_code_block = not self.in_code_block
             line = line.strip()
-            for word in self.extract(line):
+            for word in word_extractor(line):
                 self.test_word(index, word, line)
-
-    def extract(self, text):
-        word_regex = re.compile(
-            r"([\w\-'’`]+)([.,?!-:;><@#$%^&*()_+=/\]\[])?"
-        )  # noqa W605
-        previous = None
-        final_word = None
-        for match in word_regex.finditer(text):
-            try:
-                word = match.group(1)
-                if not word:
-                    raise Exception("No word matches found. Bad regex?")
-                if previous:
-                    yield previous
-                    yield previous + " " + word
-                if match.group(2):  # hit punctuation, yield word by itself
-                    yield word
-                    previous = None
-                else:
-                    previous = word
-                final_word = previous
-            except IndexError:
-                word = match.group(0)
-                yield word
-
-        if final_word:
-            yield final_word
 
 
 class TestLineLen(LineTester):
@@ -326,7 +327,7 @@ class TestPhrases(LineTester):
     def test_line(self, index, line):
         for word in self.bad_words:
             if word in line:
-                # self.add_error(index, f"Found '{word}' in line")
+                bad_list = [bad for bad in word_extractor(self.bad_words)]
                 self.add_error(index, self.error_format % word)
 
 

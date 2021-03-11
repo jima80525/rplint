@@ -3,6 +3,17 @@ import pytest
 import rplint
 
 
+def test_contraction():
+    """ Test producing errors on long lines. """
+    dut = rplint.TestContractions()
+    dut.test_line(1, "not a problem")
+    dut.test_line(2, "")
+    dut.test_line(3, " ")
+    dut.test_line(4, "edit is")
+    assert not bool(dut)
+    dut.test_line(5, "it is")
+    assert bool(dut)
+
 def test_line_length():
     """ Test producing errors on long lines. """
     dut = rplint.TestLineLen(500)
