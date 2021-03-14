@@ -45,6 +45,16 @@ There are several features that could be added, but the next on my list is proba
 
 I welcome more ideas, either as a simple message, an issue, or a PR here.
 
+## Building
+
+The project uses what is likely an odd mixture of **poetry** and **invoke**.  Poetry is used to manage dependencies and invoke is used like make, running the tests and doing releases.
+
+Installing Poetry caused me some issues.  First following the [instructions](https://python-poetry.org/docs/) and then copy the PATH export that the installer put into .profile into .bashrc.  This part is for linux (and possibly macOS) users. 
+
+Once that's installed (and you have a virtualenv setup!) use `poetry install` to get all the required dependencies set up. 
+
+The invoke tool uses `tasks.py` to provide commands to build and test the code. The most frequent ones to use are: `invoke --list`, which shows the list of possible commands, and `invoke test` which runs the unit tests. 
+
 ## Helping Out
 
 I'm not sure if this will be useful to others, so until I see signs of life, I'm not going to bother with a full code of conduct and rules/guidelines for adding to the project.  Right now the rules are basically: 
@@ -59,6 +69,10 @@ This project is in very early stages and I'm not certain it will continue as a s
 I'd like to thank Brad Solomon for offering some excellent PRs on this and really moving it forward!
 
 ## Release Notes
+
+### 0.8.1
+
+* Fix for false positive matches when checking for phrases. For example "edit is" was triggering a contraction check for "it it".  
 
 ### 0.6.0 -> 0.7.0  - 14 Feb 2021
 

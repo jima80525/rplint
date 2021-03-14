@@ -6,12 +6,27 @@ import rplint
 def test_contraction():
     """ Test producing errors on long lines. """
     dut = rplint.TestContractions()
-    dut.test_line(1, "not a problem")
-    dut.test_line(2, "")
-    dut.test_line(3, " ")
-    dut.test_line(4, "edit is")
+    dut.test_line(1, "edit is aaa")
+    dut.test_line(2, "not a problem edit is")
+    dut.test_line(3, "aaa edit is bbb")
+    dut.test_line(4, "aaa ?edit is bbb")
+    dut.test_line(5, "aaa edit is? bbb")
     assert not bool(dut)
-    dut.test_line(5, "it is")
+
+    dut = rplint.TestContractions()
+    dut.test_line(1, "it is bbb")
+    assert bool(dut)
+    dut = rplint.TestContractions()
+    dut.test_line(5, "aaa it is")
+    assert bool(dut)
+    dut = rplint.TestContractions()
+    dut.test_line(5, "aaa it is bbb")
+    assert bool(dut)
+    dut = rplint.TestContractions()
+    dut.test_line(5, "aaa !!it is bbb")
+    assert bool(dut)
+    dut = rplint.TestContractions()
+    dut.test_line(5, "aaa it is!! bbb")
     assert bool(dut)
 
 def test_line_length():
