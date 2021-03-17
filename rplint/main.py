@@ -1,5 +1,6 @@
 import click
 import re
+import string
 
 __version__ = "0.7.1"
 
@@ -326,8 +327,11 @@ class TestPhrases(LineTester):
     def test_line(self, index, line):
         for word in self.bad_words:
             if word in line:
-                # self.add_error(index, f"Found '{word}' in line")
-                self.add_error(index, self.error_format % word)
+                # check to make sure that the found match isn't a false match
+                # (like "edit is" matching "it is")
+                index = line.find(word)
+                if index == 0 or line[index-1] not in string.ascii_letters:
+                    self.add_error(index, self.error_format % word)
 
 
 class TestContractions(TestPhrases):
