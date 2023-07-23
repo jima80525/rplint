@@ -1,0 +1,49 @@
+bokeh,  # Bokeh
+Numpy,  # NumPy
+numpy,  # NumPy
+Pygame,  # PyGame
+pygame,  # PyGame
+Pytorch,  # PyTorch
+pytorch,  # PyTorch
+Tensorflow,  # TensorFlow
+tensorflow,  # TensorFlow
+Conda,  # conda (lowercase, monospace)
+Computer Science,
+Computer science,  # computer science (no caps)
+fahrenheit,  # Fahrenheit (capitalize)
+f string,
+F string,
+F-string,  # f-string (hyphenate, do not capitalize)
+gherkin,  # Gherkin (uppercase)
+hello, world,
+hello world,
+Hello world,  # Hello, World (monospace, comma, caps)
+javascript,  # JavaScript
+Mac OS,  # macOS (not Mac OS or macos)
+macos,  # macOS (not Mac OS or macos)
+OSX,  # OS X (NOT OSX)
+Pandas,  # pandas (always lowercase)
+pep8,  # PEP 8 (not PEP8)
+Pep8,  # PEP 8 (not PEP8)
+PEP8,  # PEP 8 (not PEP8)
+pep-8,  # PEP 8 (not PEP8)
+Pep-8,  # PEP 8 (not PEP8)
+PEP-8,  # PEP 8 (not PEP8)
+pep 8,  # PEP 8 (not PEP8)
+Pep 8,  # PEP 8 (not PEP8)
+pygame,  # Pygame (always capitalize)
+pypi,  # PyPI
+Pypi,  # PyPI
+Pytest,  # pytest
+python,  # Python (not python)
+Scikit-Learn,  # scikit-learn
+Scikit-learn,  # scikit-learn
+scikit-Learn,  # scikit-learn
+start menu,  # Start menu (cap)
+System Python,  # system Python (lowercase)
+utf-8,  # UTF-8
+Wi Fi,  # Wi-Fi (not WIFI)
+WI-FI,  # Wi-Fi (not WIFI)
+WIFI,  # Wi-Fi (not WIFI)
+boolean,  # Boolean (always cap)
+celsius,  # Celsius (cap)

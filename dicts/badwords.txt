@@ -1,0 +1,117 @@
+I,
+we,
+our,
+aka,
+etc,
+ok,
+very,
+actually,
+article,
+utilize,
+utilise,
+regarding,
+thus,
+upon,
+caveat,
+ergo,
+incognito,
+quasi,
+via,
+built in, # built-in
+3-d,  # 3D
+32 bit,  # always hyphen
+64 bit,  # always hyphen
+comma separated,  # comma-separated list
+cross platform,  # cross-platform (always hyphenate)
+data set,  # dataset (NOT data set)
+double check,  # double-check (always hyphenate as a verb)
+double click,  # double-click (always hyphenate as a verb)
+double space,  # double-space (always hyphenate as a verb)
+double-spacing,  # double spacing (noun)
+e-mail,  # email (not e-mail)
+file name,
+file-name,  # filename
+file-path,  # file path
+filesystem,
+file-system,  # file system
+floating point,  # floating-point number (hyphenate)
+'for loop',
+for-loop,  # for loop (not “for” loop not for-loop)
+for/else,
+for-else,  # for … else (not for/else or for-else)
+front end,  # front-end developer (hyphenate)
+hard and fast,  # hard-and-fast rule
+hard code,  # hard-code
+hard coded,  # hard-coded
+hard coding,  # # hard-coding
+head first,  # headfirst (one word)
+if/else,
+if-else,  # if … else (not if/else or if-else)
+indexes,  # indices (not indexes)
+in-line,  # inline comment (no hyphen)
+left most,  # leftmost
+left-most,  # leftmost
+light weight,  # lightweight
+light-weight,  # lightweight
+lower case,
+lower-case,  # lowercase
+meta-character,  # metacharacter
+multi-dimensional,  # multidimensional
+multi-line,  # multiline
+new-line,  # newline
+non empty,  # non-empty
+nonempty,  # non-empty
+non existent,  # nonexistent
+non-existent,  # nonexistent
+non indented,  # non-indented
+nonindented,  # non-indented
+noninteger,  # non-integer
+object oriented,  # object-oriented
+on ramp,  # on-ramp (hyphenate)
+open ended,  # open-ended (aways hyphen)
+open-source,  # open source (never hyphenate)
+place-holder,  # placeholder
+pre-existing,  # preexisting
+pre-installed,  # preinstalled
+re-assign,  # reassign
+recreate,  # re-create (to avoid confusion with recreate, meaning to relax)
+re-initialize,  # reinitialize
+re-open,  # reopen
+re-run,  # rerun
+right click,  # right-click (always hyphenate)
+right-most,  # rightmost
+run-time,  # runtime
+to-last,  # second to last (never hyphenate; “third to last” etc.)
+slice-notation,  # slice notation
+stand alone,  # stand-alone
+square-bracket,  # square bracket notation (no hyphen)
+super power,  # superpower (one word)
+time stamp,  # timestamp (not time stamp)
+time-stamp,  # timestamp (not time stamp)
+top-most,  # topmost
+upper case,  # uppercase
+upper-case,  # uppercase
+use-case,  # use case (not usecase not use-case)
+usecase,  # use case (not usecase not use-case)
+user friendly,  # user-friendly (always hyphenate)
+user name,  # username
+user-name,  # username
+walk-through,  # walkthrough (not walk-through)
+webpage,  # web page
+web site,  # website
+white space,  # whitespace
+x axis,  # x-axis
+x coordinate,  # x-coordinate (always hyphenate)
+x value,  # x-value
+y axis,  # y-axis
+y coordinate,  # y-coordinate (always hyphenate)
+y value,  # y-value
+jha,
+todo,
+easy,
+simple,
+obvious,
+trivial,
+complex,
+difficult,
+unsurprising,
