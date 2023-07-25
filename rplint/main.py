@@ -11,7 +11,7 @@ RP_SYNTAX_HIGHLIGHTERS = ["cpp"]
 END_ALERT = "endalert %}"
 CODE_BLOCK_DELIMITER = "```"
 
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 
 
 class BaseChecker(abc.ABC):

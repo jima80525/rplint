@@ -8,4 +8,4 @@ from .main import EndingColonCheck  # noqa
 from .main import LineLengthCheck  # noqa
 from .main import rplint  # noqa
 
-__version__ = "0.7.1"
+__version__ = "0.8.0"
