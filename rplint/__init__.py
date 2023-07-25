@@ -6,5 +6,6 @@ from .main import CodeFormatterCheck  # noqa
 from .main import ContractionsCheck  # noqa
 from .main import EndingColonCheck  # noqa
 from .main import LineLengthCheck  # noqa
-from .main import __version__  # noqa
 from .main import rplint  # noqa
+
+__version__ = "0.7.1"
