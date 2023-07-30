@@ -1,86 +1,83 @@
-import click
+import abc
 import re
 import string
+from pathlib import Path
 
-__version__ = "0.7.1"
+import click
+
+BAD_WORDS_DIR = Path(__file__).parent.parent / "dicts"
+TRUNCATE_LENGTH = 40
+RP_SYNTAX_HIGHLIGHTERS = ["cpp"]
+END_ALERT = "endalert %}"
+CODE_BLOCK_DELIMITER = "```"
+
+__version__ = "0.8.0"
 
 
-class Tester:
-    def __init__(self):
-        self.errors = []
+class BaseChecker(abc.ABC):
+    # Feature inheritance
+    def __init__(self) -> None:
+        self.title = "Base Class Only"
+        self.in_code_block = False
+        self.errors: list[str] = []
+        self.error_format = "Found '%s' in line"
 
-    def __str__(self):
-        str = ""
-        if self.errors:
-            str += f"{self.title} Errors\n"
-            for item in self.errors:
-                str += f"\t{item}\n"
+    def __str__(self) -> str:
+        str_rep = f"{self.title}"
+        if len(self.errors) > 0:
+            str_rep += " Errors:\n"
+            for error in self.errors:
+                str_rep += f"{error:>6}\n"
+        return str_rep
 
-        return str
+    def __bool__(self) -> bool:
+        return len(self.errors) > 0
 
-    def __bool__(self):
-        return bool(self.errors)
+    def truncate_line(self, line: str):
+        trail = "..." if len(line) > TRUNCATE_LENGTH else ""
+        self.trunc = f"{line[:TRUNCATE_LENGTH]}{trail}"
 
-    def truncate_line(self, line):
-        trail = "..." if len(line) > 40 else ""
-        self.trunc = f"{line[:40]}{trail}"
+    def remove_links(self, line: str) -> str:
+        url_pattern = """
+            \[                 # literal opening square bracket
+            ([\`\(\)\*\w\s-]*) # the shown text from the line
+            \]                 # literal closing square bracket
+            \s*               # optional whitespace (is this needed?)
+            \(                # literal opening paren
+            ([^\)]*)          # group the url
+            \)                # literal closing paren
+        """
+        return re.sub(url_pattern, r"\g<1>", line, flags=re.VERBOSE)
 
-    def remove_links(self, line):
-        url_pat = """
-                      \[                 # literal opening square bracket
-                      ([\`\(\)\*\w\s-]*) # the shown text from the line
-                      \]                 # literal closing square bracket
-                       \s*               # optional whitespace (is this needed?)
-                       \(                # literal opening paren
-                       ([^\)]*)          # group the url
-                       \)                # literal closing paren
-                   """
-        return re.sub(url_pat, r"\g<1>", line, flags=re.VERBOSE)
-
-    def add_error(self, index, msg, origLine=None):
+    def register_error(self, lineno: int, msg: str, orig_line=None):
         line = ""
-        if origLine:
-            trail = "..." if len(origLine) > 40 else ""
-            line = f": {origLine[:40]}{trail}"
+        if orig_line:
+            trail = "..." if len(orig_line) > TRUNCATE_LENGTH else ""
+            line = f": {orig_line[:TRUNCATE_LENGTH]}{trail}"
+        self.errors.append(f"{lineno:5}: {msg}{line}")
 
-        self.errors.append(f"{index:5}: {msg}{line}")
+    def load_bad_words(self, filename) -> list[str]:
+        with open(filename) as file:
+            return [line.split("#")[0].strip().rstrip(",") for line in file]
+
+    # Interface inheritance
+    @abc.abstractmethod
+    def run(self, lines: list[str]):
+        pass
 
 
-class LineTester(Tester):
-    def __init__(self):
-        super().__init__()
-        self.title = "Base Class Only"
-        self.in_code_block = False
-
-    def test_lines(self, lines):
-        """Keeps a state machine of whether or not we're in a code block as
-        some tests only want to look outside code blocks."""
-        self.lines = [line.strip() for line in lines]
+class WordsChecker(BaseChecker):
+    def run(self, lines):
         for index, line in enumerate(lines, start=1):
             self.truncate_line(line)
             line = self.remove_links(line)
-            if line.startswith("```"):
-                self.in_code_block = not self.in_code_block
-            self.test_line(index, line)
-
-
-class WordTester(Tester):
-    def __init__(self):
-        super().__init__()
-        self.title = "Base Class Only"
-        self.in_code_block = False
-
-    def test_lines(self, lines):
-        for index, line in enumerate(lines, start=1):
-            self.truncate_line(line)
-            line = self.remove_links(line)
-            if line.startswith("```"):
+            if line.startswith(CODE_BLOCK_DELIMITER):
                 self.in_code_block = not self.in_code_block
             line = line.strip()
-            for word in self.extract(line):
-                self.test_word(index, word, line)
+            for word in self._extract(line):
+                self.check_word(index, word)
 
-    def extract(self, text):
+    def _extract(self, text):
         word_regex = re.compile(
             r"([\w\-'’`]+)([.,?!-:;><@#$%^&*()_+=/\]\[])?"
         )  # noqa W605
@@ -107,379 +104,216 @@ class WordTester(Tester):
         if final_word:
             yield final_word
 
-
-class TestLineLen(LineTester):
-    def __init__(self, limit):
-        super().__init__()
-        self.title = "Line Length"
-        # JHA TODO get these in command line args with defaults
-        self.error_len = limit
-
-    def test_line(self, index, line):
-        if len(line) > self.error_len:
-            self.add_error(index, f"Line length: {len(line)}")
+    # Interface inheritance
+    def check_word(self, lineno, word):
+        raise NotImplementedError
 
 
-class TestBadWords(WordTester):
-    def __init__(self, use_extra_words):
-        super().__init__()
-        self.title = "Bad Word"
-        self.bad_words = [
-            "I",
-            "we",
-            "our",
-            "aka",
-            "etc",
-            "ok",
-            "very",
-            "actually",
-            "article",
-            "utilize",
-            "utilise",
-            "regarding",
-            "thus",
-            "upon",
-            "caveat",
-            "ergo",
-            "incognito",
-            "quasi",
-            "via",
-            "3-d",  # 3D
-            "boolean",  # Boolean (always cap)
-            "celsius",  # Celsius (cap)
-            "32 bit",  # always hyphen
-            "64 bit",  # always hyphen
-            "comma separated",  # comma-separated list
-            "cross platform",  # cross-platform (always hyphenate)
-            "data set"  # dataset (NOT data set)
-            "double check",  # double-check (always hyphenate as a verb)
-            "double click",  # double-click (always hyphenate as a verb)
-            "double space",  # double-space (always hyphenate as a verb)
-            "double-spacing",  # double spacing (noun)
-            "e-mail",  # email (not e-mail)
-            "file name",
-            "file-name",  # filename
-            "file-path",  # file path
-            "filesystem",
-            "file-system",  # file system
-            "floating point",  # floating-point number (hyphenate)
-            '"for" loop',
-            "for-loop",  # for loop (not “for” loop not for-loop)
-            "for/else",
-            "for-else",  # for … else (not for/else or for-else)
-            "front end",  # front-end developer (hyphenate)
-            "hard and fast",  # hard-and-fast rule
-            "hard code",  # hard-code
-            "hard coded",  # hard-coded
-            "hard coding",  # # hard-coding
-            "head first",  # headfirst (one word)
-            "if/else",
-            "if-else",  # if … else (not if/else or if-else)
-            "indexes",  # indices (not indexes)
-            "in-line",  # inline comment (no hyphen)
-            "left most",  # leftmost
-            "left-most",  # leftmost
-            "light weight",  # lightweight
-            "light-weight",  # lightweight
-            "lower case",
-            "lower-case",  # lowercase
-            "meta-character",  # metacharacter
-            "multi-dimensional",  # multidimensional
-            "multi-line",  # multiline
-            "new-line",  # newline
-            "non empty",  # non-empty
-            "nonempty",  # non-empty
-            "non existent",  # nonexistent
-            "non-existent",  # nonexistent
-            "non indented",  # non-indented
-            "nonindented",  # non-indented
-            "noninteger",  # non-integer
-            "object oriented",  # object-oriented
-            "on ramp",  # on-ramp (hyphenate)
-            "open ended",  # open-ended (aways hyphen)
-            "open-source",  # open source (never hyphenate)
-            "place-holder",  # placeholder
-            "pre-existing",  # preexisting
-            "pre-installed",  # preinstalled
-            "re-assign",  # reassign
-            "recreate",  # re-create (to avoid confusion with recreate, meaning to relax)
-            "re-initialize",  # reinitialize
-            "re-open",  # reopen
-            "re-run",  # rerun
-            "right click",  # right-click (always hyphenate)
-            "right-most",  # rightmost
-            "run-time",  # runtime
-            "to-last",  # second to last (never hyphenate; “third to last” etc.)
-            "slice-notation",  # slice notation
-            "stand alone",  # stand-alone
-            "square-bracket",  # square bracket notation (no hyphen)
-            "super power",  # superpower (one word)
-            "time stamp",  # timestamp (not time stamp)
-            "time-stamp",  # timestamp (not time stamp)
-            "top-most",  # topmost
-            "upper case",  # uppercase
-            "upper-case",  # uppercase
-            "use-case",  # use case (not usecase not use-case)
-            "usecase",  # use case (not usecase not use-case)
-            "user friendly",  # user-friendly (always hyphenate)
-            "user name",  # username
-            "user-name",  # username
-            "walk-through",  # walkthrough (not walk-through)
-            "webpage",  # web page
-            "web site",  # website
-            "white space",  # whitespace
-            "x axis",  # x-axis
-            "x coordinate",  # x-coordinate (always hyphenate)
-            "x value",  # x-value
-            "y axis",  # y-axis
-            "y coordinate",  # y-coordinate (always hyphenate)
-            "y value",  # y-value
-        ]
-        if use_extra_words:
-            self.bad_words.extend(
-                [
-                    "jha",
-                    "todo",
-                    "easy",
-                    "simple",
-                    "obvious",
-                    "trivial",
-                    "complex",
-                    "difficult",
-                    "unsurprising",
-                ]
-            )
-        self.cap_words = [
-            "bokeh",  # Bokeh
-            "Numpy",  # NumPy
-            "numpy",  # NumPy
-            "Pygame",  # PyGame
-            "pygame",  # PyGame
-            "Pytorch",  # PyTorch
-            "pytorch",  # PyTorch
-            "Tensorflow",  # TensorFlow
-            "tensorflow",  # TensorFlow
-            "Conda",  # conda (lowercase, monospace)
-            "Computer Science",
-            "Computer science",  # computer science (no caps)
-            "fahrenheit",  # Fahrenheit (capitalize)
-            "f string",
-            "F string",
-            "F-string",  # f-string (hyphenate, do not capitalize)
-            "gherkin",  # Gherkin (uppercase)
-            "hello, world",
-            "hello world",
-            "Hello world",  # Hello, World (monospace, comma, caps)
-            "javascript",  # JavaScript
-            "Mac OS",  # macOS (not Mac OS or macos)
-            "macos",  # macOS (not Mac OS or macos)
-            "OSX",  # OS X (NOT OSX)
-            "Pandas",  # pandas (always lowercase)
-            "pep8",  # PEP 8 (not PEP8)
-            "Pep8",  # PEP 8 (not PEP8)
-            "PEP8",  # PEP 8 (not PEP8)
-            "pep-8",  # PEP 8 (not PEP8)
-            "Pep-8",  # PEP 8 (not PEP8)
-            "PEP-8",  # PEP 8 (not PEP8)
-            "pep 8",  # PEP 8 (not PEP8)
-            "Pep 8",  # PEP 8 (not PEP8)
-            "pygame",  # Pygame (always capitalize)
-            "pypi",  # PyPI
-            "Pypi",  # PyPI
-            "Pytest",  # pytest
-            "python",  # Python (not python)
-            "Scikit-Learn",  # scikit-learn
-            "Scikit-learn",  # scikit-learn
-            "scikit-Learn",  # scikit-learn
-            "start menu",  # Start menu (cap)
-            "System Python",  # system Python (lowercase)
-            "utf-8",  # UTF-8
-            "Wi Fi",  # Wi-Fi (not WIFI)
-            "WI-FI",  # Wi-Fi (not WIFI)
-            "WIFI",  # Wi-Fi (not WIFI)
-        ]
-
-    def test_word(self, index, word, line):
-        if word.lower() in self.bad_words:
-            self.add_error(index, f"Found '{word}' in line")
-        elif word in self.cap_words and not self.in_code_block:
-            # frequently code blocks must spell things with different case
-            self.add_error(index, f"Found '{word}' in line")
-
-
-class TestPhrases(LineTester):
+class BadWordsCheck(WordsChecker):
     def __init__(self):
         super().__init__()
-        self.title = "Bad Phrase"
-        self.bad_words = [
-            "exact same",
-            "built in",
-            "those of you",
-            "some of you",
-            "as you can imagine",
-            "our tutorial",
-            "de facto",
-        ]
+        self.title = "Bad Word Test"
+        self.bad_words = self.load_bad_words(BAD_WORDS_DIR / "badwords.txt")
+        self.cap_words = self.load_bad_words(BAD_WORDS_DIR / "capwords.txt")
+
+    def check_word(self, lineno, word):
+        if word.lower() in self.bad_words:
+            self.register_error(lineno, self.error_format % word)
+        elif word in self.cap_words and not self.in_code_block:
+            # Frequently, code blocks spell things in a different way
+            self.register_error(lineno, self.error_format % word)
+
+
+class LineChecker(BaseChecker):
+    def run(self, lines):
+        """Keeps a state machine of whether or not we're in a code block as
+        some tests only want to look outside code blocks."""
+        self.lines = [line.strip() for line in lines]
+        for index, line in enumerate(lines, start=1):
+            self.truncate_line(line)
+            line = self.remove_links(line)
+            if line.startswith(CODE_BLOCK_DELIMITER):
+                self.in_code_block = not self.in_code_block
+            self.check_line(index, line)
+
+    def check_line(self, lineno, line):
+        raise NotImplementedError
+
+
+class LineLengthCheck(LineChecker):
+    def __init__(self, limit):
+        super().__init__()
+        self.title = "Line Length Test"
+        self.error_len = limit
+
+    def check_line(self, lineno, line):
+        if len(line) > self.error_len:
+            self.register_error(lineno, f"Line length: {len(line)}")
+
+
+class BadPhrasesCheck(LineChecker):
+    def __init__(self):
+        super().__init__()
+        self.title = "Bad Phrase Test"
+        self.bad_words = self.load_bad_words(BAD_WORDS_DIR / "badphrases.txt")
         # To also catch bad phrases at the beginning of a sentence
         self.bad_words.extend([p.capitalize() for p in self.bad_words])
-        self.error_format = "Found '%s' in line"
 
-    def test_line(self, index, line):
+    def check_line(self, lineno, line):
         for word in self.bad_words:
             if word in line:
                 # check to make sure that the found match isn't a false match
                 # (like "edit is" matching "it is")
                 index = line.find(word)
-                if index == 0 or line[index-1] not in string.ascii_letters:
-                    self.add_error(index, self.error_format % word)
+                if index == 0 or line[index - 1] not in string.ascii_letters:
+                    self.register_error(lineno, self.error_format % word)
 
 
-class TestContractions(TestPhrases):
+class ContractionsCheck(BadPhrasesCheck):
     def __init__(self):
         super().__init__()
-        self.error_format = "Found '%s' (should be a contraction) in line"
-        self.title = "Contraction"
-        self.bad_words = [
-            "has not",
-            "do not",
-            "it is",
-            "it will",
-            "that is",
-            "they are",
-            "they will",
-            "you will",
-            "you are",
-        ]
+        self.title = "Contraction Test"
+        self.bad_words = self.load_bad_words(
+            BAD_WORDS_DIR / "contractions.txt"
+        )
         # To also catch potential contractions at the beginning of a sentence
         self.bad_words.extend([c.capitalize() for c in self.bad_words])
 
 
-class TestCodeFormatter(LineTester):
+class CodeFormatterCheck(LineChecker):
     def __init__(self):
         super().__init__()
-        self.title = "Code Formatter"
+        self.title = "Code Formatter Test"
+        self.formatters = self.load_bad_words(
+            BAD_WORDS_DIR / "syntaxhighlighters.txt"
+        )
 
-    def test_line(self, index, line):
-        """Tracks that all code blocks have formatters. Keeps a state machine
-        of whether or not we're in a code block as we only want to look for
-        formatters on starting lines."""
-        lline = line.lower()
-        if line.startswith("```") and self.in_code_block:
-            if len(line) == 3:
-                self.add_error(index, "Code block has no formatter")
-            if "c++" in line.lower():
-                self.add_error(
-                    index,
-                    "Code block has bad formatter (c++ " "instead of cpp)",
+    def check_line(self, lineno, line):
+        """Tracks that all code blocks have formatters."""
+        if line.startswith(CODE_BLOCK_DELIMITER) and self.in_code_block:
+            if len(line.strip()) == 3:
+                self.register_error(lineno, "Code block has no formatter")
+                return
+            formatter = line[3:].split()[0]
+            if formatter not in self.formatters:
+                self.register_error(
+                    lineno,
+                    f"Code block has bad formatter '{formatter}'",
                 )
-            if "linenums=" in lline and 'linenums="' not in lline:
-                self.add_error(index, "Poorly formed linenums spec")
 
 
-class TestLeadingColon(LineTester):
+class EndingColonCheck(LineChecker):
     def __init__(self):
         super().__init__()
-        self.title = "Colon"
+        self.title = "Ending Colon Test"
         self.in_code_block = False
 
-    def test_line(self, index, line):
-        """ensures that line before a code block is blank and two lines before
-        ends with a colon."""
-        if line.startswith("```") and self.in_code_block:
+    def check_line(self, lineno, line):
+        if line.startswith(CODE_BLOCK_DELIMITER) and self.in_code_block:
             """Because we're using a 1-based index, the actual indices into
             the self.lines array are offset by one."""
-            blank = self.lines[index - 2]
-            text = self.lines[index - 3]
+            previous_line = self.lines[lineno - 2]
+            text_line = self.lines[lineno - 3]
             # sanity check to avoid issues
-            if index < 3:
-                self.add_error(index, "code block starts before text!")
+            if lineno < 3:
+                self.register_error(lineno, "Code block starts before text")
             # previous line (n-2) must be blank
-            elif len(blank) > 0:
-                self.add_error(index, "line preceding code block must be blank")
+            elif len(previous_line) > 0:
+                self.register_error(
+                    lineno, "Line preceding code block must be blank"
+                )
             # line before that (n-3) must have text ending in colon
-            elif len(text) == 0:
-                self.add_error(index, "two blank lines before code block")
-            elif text[-1] != ":":
-                self.add_error(
-                    index,
-                    "final text preceding code block must end in colon",
+            elif len(text_line) == 0:
+                self.register_error(
+                    lineno, "Two blank lines before code block"
+                )
+            elif text_line.strip()[-1] != ":":
+                self.register_error(
+                    lineno,
+                    "Text preceding code block must end in a colon",
                 )
 
 
-class TestCodeBlockOrAlertEndsSection(LineTester):
-    ENDALERT = "endalert %}"
-    ENDCODE = "```"
-    end_block_re = re.compile(rf".*?({ENDALERT}|{ENDCODE})\s*")
+class CodeBlockOrAlertEndsSectionCheck(LineChecker):
+    end_block_re = re.compile(rf".*?({END_ALERT}|{CODE_BLOCK_DELIMITER})\s*")
 
     def __init__(self):
         super().__init__()
-        self.title = "Dangling Code Block or Alert"
+        self.title = "Dangling Code Block or Alert Test"
 
-    def test_line(self, index, line):
+    def check_line(self, lineno, line):
         match = self.end_block_re.match(line)
         if match and not self.in_code_block:
-            # We found a closing marker for a template tag or code
-            # block. Now look to see if subsequent lines go straight to
-            # introducing a header.
-            for next_line in self.lines[index:]:
+            for next_line in self.lines[lineno:]:
                 if not next_line or next_line.isspace():
                     continue
                 if next_line.startswith("#"):
                     g = match.group(1)
-                    if g == self.ENDALERT:
-                        msg = (
-                            "a section should not end abruptly with an endalert"
-                        )
-                    elif g == self.ENDCODE:
-                        msg = "a section should not end with a code block"
-                    self.add_error(index, msg)
+                    msg = "Unkown error"
+                    if g == END_ALERT:
+                        msg = "Section should not end with an alert block"
+                    elif g == CODE_BLOCK_DELIMITER:
+                        msg = "Section should not end with a code block"
+                    self.register_error(lineno, msg)
                 else:
                     break
 
 
-class TestHereLinks(LineTester):
+class BadLinkAnchorCheck(LineChecker):
     """Catches links where the link text is a generic term.
 
     ... 'generic' such as 'here' or 'this link'.
     """
 
+    # TODO: This regex isn't working as expected
     shoddy_md_link_re = re.compile(
         r"\[(?:here|this (?:article|tutorial|link))\]\([^)]+\)"
     )
 
     def __init__(self):
         super().__init__()
-        self.title = "Bad Link Text"
+        self.title = "Bad Link Anchor Test"
 
-    def test_line(self, index, line):
+    def check_line(self, lineno, line):
         if self.in_code_block:
-            return None
+            return
         match = self.shoddy_md_link_re.search(line)
-        if match:
-            self.add_error(
-                index, f"links should use descriptive text: {match.group(0)}"
+        if match is not None:
+            self.register_error(
+                lineno,
+                f"Links anchored to generic term '{match.group(0)}'",
             )
 
 
-@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("-l", "--line-length", default=500)
-@click.option("-j", "--jima", is_flag=True, help="use extra bad word list")
-@click.version_option(version=__version__)
-@click.argument("filename", type=str)
-def rplint(line_length, jima, filename):
-    testers = [
-        TestLineLen(line_length),
-        TestBadWords(jima),
-        TestHereLinks(),
-        TestPhrases(),
-        TestContractions(),
-        TestCodeFormatter(),
-        TestLeadingColon(),
+@click.command()
+@click.option(
+    "-l",
+    "--line-length",
+    type=click.INT,
+    default=500,
+    help="Line length to check for.",
+)
+@click.argument(
+    "input_file",
+    type=click.File(mode="r"),
+    required=True,
+)
+def rplint(input_file, line_length):
+    """Checks a Markdown file for common writing errors."""
+    checks = [
+        BadWordsCheck(),
+        LineLengthCheck(line_length),
+        BadPhrasesCheck(),
+        ContractionsCheck(),
+        CodeFormatterCheck(),
+        EndingColonCheck(),
+        CodeBlockOrAlertEndsSectionCheck(),
+        BadLinkAnchorCheck(),
     ]
-    # testers = [TestLeadingColon(), ]
-    with open(filename) as infile:
-        lines = infile.readlines()
-        for tester in testers:
-            tester.test_lines(lines)
-            if tester:
-                print(tester)
+    lines = input_file.readlines()
+    for check in checks:
+        check.run(lines)
+        if check:
+            click.secho(check, fg="red")
+        else:
+            click.secho(f"{check}... Passes!", fg="green")

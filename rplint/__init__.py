@@ -1,11 +1,11 @@
-from .main import TestLineLen
-from .main import TestBadWords
-from .main import TestHereLinks
-from .main import TestPhrases
-from .main import TestCodeBlockOrAlertEndsSection
-from .main import TestContractions
-from .main import TestCodeFormatter
-from .main import TestLeadingColon
-from .main import rplint
+from .main import BadLinkAnchorCheck  # noqa
+from .main import BadPhrasesCheck  # noqa
+from .main import BadWordsCheck  # noqa
+from .main import CodeBlockOrAlertEndsSectionCheck  # noqa
+from .main import CodeFormatterCheck  # noqa
+from .main import ContractionsCheck  # noqa
+from .main import EndingColonCheck  # noqa
+from .main import LineLengthCheck  # noqa
+from .main import rplint  # noqa
 
-__version__ = "0.7.1"
+__version__ = "0.8.0"
