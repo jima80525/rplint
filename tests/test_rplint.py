@@ -341,12 +341,13 @@ def test_url_line_length():
     too_long = just_right + "z"
 
     # too_short and just_right should not raise an error
-    dut = rplint.LineLengthCheck(500)
+    dut = rplint.LineLengthCheck()
     dut.run([too_short])
     dut.run([just_right])
     assert not bool(dut)
 
     # too_long should fail
-    dut = rplint.LineLengthCheck(500)
+    dut = rplint.LineLengthCheck()
+    dut.line_length = 500
     dut.run([too_long])
     assert bool(dut)
