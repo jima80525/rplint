@@ -47,12 +47,11 @@ class BaseChecker(abc.ABC):
         """
         return re.sub(url_pattern, r"\g<1>", line, flags=re.VERBOSE)
 
-    def register_error(self, lineno: int, msg: str, orig_line=None):
-        line = ""
-        if orig_line:
-            trail = "..." if len(orig_line) > TRUNCATE_LENGTH else ""
-            line = f": {orig_line[:TRUNCATE_LENGTH]}{trail}"
-        self.errors.append(f"{lineno:5}: {msg}{line}")
+    def register_error(self, lineno: int, msg: str, column: int = -1):
+        if column > 0:
+            self.errors.append(f"{lineno:5}:{column:<3}: {msg}")
+        else:
+            self.errors.append(f"{lineno:5}: {msg}")
 
     def load_bad_words(self, filename) -> list[str]:
         with open(filename) as file:
@@ -164,7 +163,9 @@ class BadPhrasesCheck(LineChecker):
                 # (like "edit is" matching "it is")
                 index = line.find(word)
                 if index == 0 or line[index - 1] not in string.ascii_letters:
-                    self.register_error(lineno, self.error_format % word)
+                    self.register_error(
+                        lineno, self.error_format % word, index
+                    )
 
 
 class ContractionsCheck(BadPhrasesCheck):
@@ -189,7 +190,7 @@ class CodeFormatterCheck(LineChecker):
     def check_line(self, lineno, line):
         """Tracks that all code blocks have formatters."""
         if line.startswith(CODE_BLOCK_DELIMITER) and self.in_code_block:
-            if len(line.strip()) == 3:
+            if len(line.strip()) == len(CODE_BLOCK_DELIMITER):
                 self.register_error(lineno, "Code block has no formatter")
                 return
             formatter = line[3:].split()[0]
@@ -227,7 +228,7 @@ class EndingColonCheck(LineChecker):
                 )
             elif text_line.strip()[-1] != ":":
                 self.register_error(
-                    lineno,
+                    lineno - 2,
                     "Text preceding code block must end in a colon",
                 )
 
@@ -280,4 +281,20 @@ class BadLinkAnchorCheck(LineChecker):
             self.register_error(
                 lineno,
                 f"Links anchored to generic term '{match.group(0)}'",
+            )
+
+
+class SpacesInLineCheck(LineChecker):
+    def __init__(self):
+        super().__init__()
+        self.title = "Spaces in Line Check"
+
+    def check_line(self, lineno, line):
+        if line.endswith(" \n"):
+            self.register_error(
+                lineno, self.error_format % "trailing whitespace"
+            )
+        if not self.in_code_block and "|" not in line and "  " in line:
+            self.register_error(
+                lineno, self.error_format % "double spaces in line"
             )
