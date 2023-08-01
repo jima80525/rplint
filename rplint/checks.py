@@ -3,8 +3,6 @@ import re
 import string
 from pathlib import Path
 
-import click
-
 BAD_WORDS_DIR = Path(__file__).parent.parent / "dicts"
 TRUNCATE_LENGTH = 40
 RP_SYNTAX_HIGHLIGHTERS = ["cpp"]
@@ -141,13 +139,13 @@ class LineChecker(BaseChecker):
 
 
 class LineLengthCheck(LineChecker):
-    def __init__(self, limit):
+    def __init__(self):
         super().__init__()
         self.title = "Line Length Test"
-        self.error_len = limit
+        self.line_length = 500
 
     def check_line(self, lineno, line):
-        if len(line) > self.error_len:
+        if len(line) > self.line_length:
             self.register_error(lineno, f"Line length: {len(line)}")
 
 
@@ -283,37 +281,3 @@ class BadLinkAnchorCheck(LineChecker):
                 lineno,
                 f"Links anchored to generic term '{match.group(0)}'",
             )
-
-
-@click.command()
-@click.option(
-    "-l",
-    "--line-length",
-    type=click.INT,
-    default=500,
-    help="Line length to check for.",
-)
-@click.argument(
-    "input_file",
-    type=click.File(mode="r"),
-    required=True,
-)
-def rplint(input_file, line_length):
-    """Checks a Markdown file for common writing errors."""
-    checks = [
-        BadWordsCheck(),
-        LineLengthCheck(line_length),
-        BadPhrasesCheck(),
-        ContractionsCheck(),
-        CodeFormatterCheck(),
-        EndingColonCheck(),
-        CodeBlockOrAlertEndsSectionCheck(),
-        BadLinkAnchorCheck(),
-    ]
-    lines = input_file.readlines()
-    for check in checks:
-        check.run(lines)
-        if check:
-            click.secho(check, fg="red")
-        else:
-            click.secho(f"{check}... Passes!", fg="green")
