@@ -3,8 +3,6 @@ import re
 import string
 from pathlib import Path
 
-import click
-
 BAD_WORDS_DIR = Path(__file__).parent.parent / "dicts"
 TRUNCATE_LENGTH = 40
 RP_SYNTAX_HIGHLIGHTERS = ["cpp"]
@@ -49,12 +47,11 @@ class BaseChecker(abc.ABC):
         """
         return re.sub(url_pattern, r"\g<1>", line, flags=re.VERBOSE)
 
-    def register_error(self, lineno: int, msg: str, orig_line=None):
-        line = ""
-        if orig_line:
-            trail = "..." if len(orig_line) > TRUNCATE_LENGTH else ""
-            line = f": {orig_line[:TRUNCATE_LENGTH]}{trail}"
-        self.errors.append(f"{lineno:5}: {msg}{line}")
+    def register_error(self, lineno: int, msg: str, column: int = -1):
+        if column > 0:
+            self.errors.append(f"{lineno:5}:{column:<3}: {msg}")
+        else:
+            self.errors.append(f"{lineno:5}: {msg}")
 
     def load_bad_words(self, filename) -> list[str]:
         with open(filename) as file:
@@ -141,13 +138,13 @@ class LineChecker(BaseChecker):
 
 
 class LineLengthCheck(LineChecker):
-    def __init__(self, limit):
+    def __init__(self):
         super().__init__()
         self.title = "Line Length Test"
-        self.error_len = limit
+        self.line_length = 500
 
     def check_line(self, lineno, line):
-        if len(line) > self.error_len:
+        if len(line) > self.line_length:
             self.register_error(lineno, f"Line length: {len(line)}")
 
 
@@ -166,7 +163,9 @@ class BadPhrasesCheck(LineChecker):
                 # (like "edit is" matching "it is")
                 index = line.find(word)
                 if index == 0 or line[index - 1] not in string.ascii_letters:
-                    self.register_error(lineno, self.error_format % word)
+                    self.register_error(
+                        lineno, self.error_format % word, index
+                    )
 
 
 class ContractionsCheck(BadPhrasesCheck):
@@ -191,7 +190,7 @@ class CodeFormatterCheck(LineChecker):
     def check_line(self, lineno, line):
         """Tracks that all code blocks have formatters."""
         if line.startswith(CODE_BLOCK_DELIMITER) and self.in_code_block:
-            if len(line.strip()) == 3:
+            if len(line.strip()) == len(CODE_BLOCK_DELIMITER):
                 self.register_error(lineno, "Code block has no formatter")
                 return
             formatter = line[3:].split()[0]
@@ -229,7 +228,7 @@ class EndingColonCheck(LineChecker):
                 )
             elif text_line.strip()[-1] != ":":
                 self.register_error(
-                    lineno,
+                    lineno - 2,
                     "Text preceding code block must end in a colon",
                 )
 
@@ -285,35 +284,17 @@ class BadLinkAnchorCheck(LineChecker):
             )
 
 
-@click.command()
-@click.option(
-    "-l",
-    "--line-length",
-    type=click.INT,
-    default=500,
-    help="Line length to check for.",
-)
-@click.argument(
-    "input_file",
-    type=click.File(mode="r"),
-    required=True,
-)
-def rplint(input_file, line_length):
-    """Checks a Markdown file for common writing errors."""
-    checks = [
-        BadWordsCheck(),
-        LineLengthCheck(line_length),
-        BadPhrasesCheck(),
-        ContractionsCheck(),
-        CodeFormatterCheck(),
-        EndingColonCheck(),
-        CodeBlockOrAlertEndsSectionCheck(),
-        BadLinkAnchorCheck(),
-    ]
-    lines = input_file.readlines()
-    for check in checks:
-        check.run(lines)
-        if check:
-            click.secho(check, fg="red")
-        else:
-            click.secho(f"{check}... Passes!", fg="green")
+class SpacesInLineCheck(LineChecker):
+    def __init__(self):
+        super().__init__()
+        self.title = "Spaces in Line Check"
+
+    def check_line(self, lineno, line):
+        if line.endswith(" \n"):
+            self.register_error(
+                lineno, self.error_format % "trailing whitespace"
+            )
+        if not self.in_code_block and "|" not in line and "  " in line:
+            self.register_error(
+                lineno, self.error_format % "double spaces in line"
+            )
